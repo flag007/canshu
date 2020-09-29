@@ -168,12 +168,14 @@ func main() {
 		}
 		
 		out, _ := joiner(allParams)
-		if details {
-			fmt.Println(au.Red(url + "?" + out))
-		}else {
-			fmt.Println(url + "?" + out)
+		if len(allParams) != 0 {
+			if details && {
+				fmt.Println(au.Red(url + "?" + out))
+			}else {
+				fmt.Println(url + "?" + out)
+			}
 		}
-			
+		
 		if len(allParams) == 0 {
 			if details {
 				fmt.Println(au.Yellow("没有找到参数"))
