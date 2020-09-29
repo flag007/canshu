@@ -233,7 +233,6 @@ func httpGet(url string) ([]byte, int, error) {
 	return raw, res.StatusCode, nil
 }
 
-
 func splitArray(arr []string, num int64) [][]string {
 	max := int64(len(arr))
 	if max < num {
