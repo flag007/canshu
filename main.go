@@ -169,7 +169,7 @@ func main() {
 		
 		out, _ := joiner(allParams)
 		if len(allParams) != 0 {
-			if details && {
+			if details {
 				fmt.Println(au.Red(url + "?" + out))
 			}else {
 				fmt.Println(url + "?" + out)
