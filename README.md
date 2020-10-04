@@ -4,5 +4,5 @@
 安装:
 
 ```
-▶ go get github.com/flag007/canshu
+▶ go get -u -v  github.com/flag007/canshu
 ```
