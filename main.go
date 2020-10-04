@@ -29,7 +29,7 @@ func main() {
 	flag.BoolVar(&details, "v", false, "输出详情")
 
 	var path string
-	flag.StringVar(&path, "f", "/root/tools/canshu/params.txt", "设置参数字典")
+	flag.StringVar(&path, "f", "/root/db/params.txt", "设置参数字典")
 
 	var url string
 	flag.StringVar(&url, "u", "", "目标网址")
