@@ -24,8 +24,8 @@ func init() {
 }
 
 func main() {
-	var urls []string	
-	
+	var urls []string
+
 	flag.BoolVar(&details, "v", false, "输出详情")
 
 	var path string
@@ -48,7 +48,7 @@ func main() {
 		}
 
 		if err := sc.Err(); err != nil && details {
-			fmt.Fprintf(os.Stderr, " 从输入流读取参数失败: %s\n ", err)
+			return
 		}
 	}
 
@@ -63,28 +63,26 @@ func main() {
 
 	for _, url := range urls {
 		foundParamsTemp := make(chan string)
-	
+
 		foundParams := make(chan string)
-	
-	
-		if details {
-			fmt.Println(au.Magenta("[~] 分析网页内容"))
-			fmt.Println(au.Yellow(url))
-		}
-		
+
+
+		fmt.Println(au.Magenta("[~] 分析网页内容"))
+		fmt.Println(au.Yellow(url))
+
 		firstResponse, _, err := httpGet(url)
-	
+
 		if err != nil && details{
-			fmt.Fprintf(os.Stderr, " http请求失败 : %s\n ", au.Red(err))
+			continue
 		}
-		
+
 		originalFuzz := RandomString(6)
 		originalResponse, originalCode, err := httpGet(url + "?" + RandomString(8) + "=" + originalFuzz)
-		
+
 		if err != nil && details{
-			fmt.Fprintf(os.Stderr, " http请求失败 : %s\n ", au.Red(err))
+			continue
 		}
-		
+
 		reflections := strings.Count(string(originalResponse), originalFuzz)
 		if details {
 			fmt.Printf("%s %d\n", au.Magenta("随机参数反射次数:"), au.Green(reflections))
@@ -100,7 +98,7 @@ func main() {
 		factors = make(map[string]bool)
 		factors["sameHTML"] = false
 		factors["samePlainText"] = false
-		
+
 		if len(firstResponse) == newLength {
 			factors["sameHTML"] = true
 		}
@@ -108,39 +106,45 @@ func main() {
 		if len(removeTags(string(firstResponse))) == plainTextLength {
 			factors["samePlainText"] = true
 		}
-	
-		
+
+
 		paramFromHtml := heuristic(firstResponse)
-		
+
+		if details {
+			for _, each := range paramFromHtml {
+				fmt.Println("[~] " + each)
+			}
+		}
 		paramSlice := append(paramFromHtml, paramFromFile...)
-	
+
+		if details {
+			fmt.Printf("%s %d\n", au.Magenta("待测试参数数:"), au.Green(len(paramSlice)))
+		}
 		paramCheck := splitArray(paramSlice, int64(len(paramSlice)/100))
 
 		var foundParamsTempWG sync.WaitGroup
-		
+
 		for _, params := range paramCheck {
 			foundParamsTempWG.Add(1)
 			go func(params []string) {
 				temp := quickBruter(params, originalResponse, originalCode, reflections, url)
 				if len(temp) != 0 {
 					for _, t := range temp {
-  						foundParamsTemp <- t
+						foundParamsTemp <- t
 					}
 				}
 				foundParamsTempWG.Done()
-			}(params) 
-			
+			}(params)
+
 		}
-		
+
 		go func() {
 			foundParamsTempWG.Wait()
 			close(foundParamsTemp)
 		}()
-		
-		
+
 		var foundParamsWG sync.WaitGroup
-	
-		
+
 		for param := range foundParamsTemp {
 			params := []string{param}
 			foundParamsWG.Add(1)
@@ -150,38 +154,28 @@ func main() {
 					foundParams <- exists[0]
 				}
 				foundParamsWG.Done()
-			}(params) 
+			}(params)
 		}
 
 		go func() {
 			foundParamsWG.Wait()
 			close(foundParams)
 		}()
-		
-		
+
+
 		allParams := []string{}
 		for each := range foundParams {
-			if details {
-				fmt.Printf("%s %s\n", au.Magenta("找到的参数"), au.Red(each))
-			}
+			fmt.Println("[!] "+ url + "?" + each + "=fake")
 			allParams = append(allParams, each)
 		}
-		
-		out, _ := joiner(allParams)
-		if len(allParams) != 0 {
-			if details {
-				fmt.Println(au.Red(url + "?" + out))
-			}else {
-				fmt.Println(url + "?" + out)
-			}
-		}
-		
+
+
 		if len(allParams) == 0 {
 			if details {
 				fmt.Println(au.Yellow("没有找到参数"))
 			}
 		}
-		
+
 		if details {
 			fmt.Println(au.Green("================================================================================================================================================\n"))
 		}
@@ -215,11 +209,11 @@ func ReadLine(fileName string) ([]string, error) {
 
 func httpGet(url string) ([]byte, int, error) {
 	res, err := http.Get(url)
-	
+
 	if nil != res {
 		defer res.Body.Close()
 	}
-	
+
 	if err != nil {
 		return []byte{}, 0, err
 	}
@@ -301,12 +295,12 @@ func quickBruter(params []string, originalResponse []byte, originalCode int, ref
 	joined, joinedm := joiner(params)
 	newResponse, newCode, err := httpGet(url + "?" + joined)
 	if err != nil && details{
-		fmt.Fprintf(os.Stderr, " 失败的http请求: %s\n ", au.Red(err))
+		return []string{}
 	}
-	
+
 	if newCode == 429 && details{
 		fmt.Println(au.Red("注意，有速率限制！！！！！！"))
-		return params
+		return []string{}
 	}
 	if newCode != originalCode {
 		return params
@@ -334,5 +328,3 @@ func joiner(params []string) (string, map[string]string) {
 	}
 	return strings.Trim(out, "&"), outm
 }
-
-
