@@ -165,9 +165,16 @@ func main() {
 
 		allParams := []string{}
 		for each := range foundParams {
-			fmt.Println("[!] "+ url + "?" + each + "=fake")
 			allParams = append(allParams, each)
 		}
+
+		if len(allParams) <= 200 {
+                        for _, each := range allParams {
+                                fmt.Println("[!] "+ url + "?" + each + "=fake")
+                        }
+                } else {
+                        fmt.Println(au.Yellow("参数太多，应该是误报！！！！！！！！"))
+                }
 
 
 		if len(allParams) == 0 {
