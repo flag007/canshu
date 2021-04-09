@@ -168,7 +168,7 @@ func main() {
 			allParams = append(allParams, each)
 		}
 
-		if len(allParams) <= 200 {
+		if len(allParams) <= 2000 {
                         for _, each := range allParams {
                                 fmt.Println("[!] "+ url + "?" + each + "=fake")
                         }
